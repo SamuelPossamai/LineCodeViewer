@@ -91,3 +91,32 @@ def generate_2B1Q(binary_list, _):
     return result
 
 #-------------------------#-------------------------#-------------------------#-------------------------#-------------------------#
+
+def generate_MLT3(binary_list, init_cond):
+    
+    growing = ( init_cond == 1 )
+    
+    if init_cond == 0:
+        last = 1
+    elif init_cond == 3:
+        last = -1
+    else:
+        last = 0
+    
+    result = []
+    for bit in binary_list:
+        if bit:
+            if growing:
+                last += 1
+            else:
+                last -= 1
+            
+            if last > 1 or last < -1:
+                last = 0
+                growing = not growing
+        
+        result.append(last)
+    
+    return result
+
+#-------------------------#-------------------------#-------------------------#-------------------------#-------------------------#

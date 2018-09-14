@@ -218,7 +218,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             end = start + 21*self.VizualizationSpinBox.value()/20
         
         diff = max(y) - min(y)
-        ax.axis([start, end, min(y) - 0.2*diff, max(y) + 0.2*diff])
+        ax.axis([start, end, min(y) - 0.2*diff - 0.04, max(y) + 0.2*diff + 0.04])
     
     def init_connect(self):
         
@@ -248,7 +248,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
              "NRZ Polar" : ( linecodes.generate_nrz_polar, 1, ()),
              "AMI" : ( linecodes.generate_ami, 1, ("Bit 1 Positivo", "Bit 1 Negativo")),
              "RZ" : ( linecodes.generate_rz, 1, () ),
-             "2B1Q" : ( linecodes.generate_2B1Q, 2, () ) }
+             "2B1Q" : ( linecodes.generate_2B1Q, 2, () ),
+             "MLT-3" : ( linecodes.generate_MLT3, 1, ("Bit 1", "Bit 0 Crescendo", "Bit 0 Decrescendo", "Bit -1") )}
         
         self.codeComboBox.clear()
         

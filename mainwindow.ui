@@ -33,10 +33,16 @@
     </item>
     <item row="2" column="0" colspan="2">
      <layout class="QGridLayout" name="gridLayout_2">
-      <item row="1" column="3">
-       <widget class="QCheckBox" name="partialVizualizationCheckBox">
-        <property name="text">
-         <string>Visualização parcial</string>
+      <item row="0" column="4">
+       <widget class="QDoubleSpinBox" name="outputMultiplierSpinBox">
+        <property name="minimum">
+         <double>0.010000000000000</double>
+        </property>
+        <property name="maximum">
+         <double>9999.989999999999782</double>
+        </property>
+        <property name="value">
+         <double>1.000000000000000</double>
         </property>
        </widget>
       </item>
@@ -44,13 +50,6 @@
        <widget class="QRadioButton" name="stringInputRadioButton">
         <property name="text">
          <string>Entrada &amp;de texto</string>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="4">
-       <widget class="QCheckBox" name="staticCheckBox">
-        <property name="text">
-         <string>Estático</string>
         </property>
        </widget>
       </item>
@@ -89,7 +88,7 @@
         </property>
        </widget>
       </item>
-      <item row="1" column="5">
+      <item row="1" column="6">
        <widget class="QSpinBox" name="VizualizationSpinBox">
         <property name="minimum">
          <number>1</number>
@@ -102,7 +101,7 @@
         </property>
        </widget>
       </item>
-      <item row="0" column="5">
+      <item row="0" column="6">
        <widget class="QComboBox" name="initialConditionComboBox">
         <property name="maximumSize">
          <size>
@@ -115,10 +114,31 @@
         </property>
        </widget>
       </item>
-      <item row="0" column="4">
+      <item row="0" column="5">
        <widget class="QLabel" name="initialConditionLabel">
         <property name="text">
          <string>Condição Inicial:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="3">
+       <widget class="QLabel" name="label_3">
+        <property name="text">
+         <string>Multiplicador de saída:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="3">
+       <widget class="QCheckBox" name="partialVizualizationCheckBox">
+        <property name="text">
+         <string>Visualização parcial</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="4">
+       <widget class="QCheckBox" name="staticCheckBox">
+        <property name="text">
+         <string>Estático</string>
         </property>
        </widget>
       </item>
@@ -137,43 +157,7 @@
        <widget class="QLineEdit" name="lineEdit"/>
       </item>
       <item>
-       <widget class="QComboBox" name="codeComboBox">
-        <item>
-         <property name="text">
-          <string>Manchester Diferencial</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>B8ZS</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>Manchester</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>NRZ Polar</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>AMI</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>RZ</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>2B1Q</string>
-         </property>
-        </item>
-       </widget>
+       <widget class="QComboBox" name="codeComboBox"/>
       </item>
      </layout>
     </item>
@@ -311,12 +295,12 @@
   </widget>
   <action name="actionAjuda">
    <property name="text">
-    <string>Ajuda</string>
+    <string>&amp;Ajuda</string>
    </property>
   </action>
   <action name="actionSobre">
    <property name="text">
-    <string>Sobre</string>
+    <string>&amp;Sobre</string>
    </property>
   </action>
  </widget>

@@ -37,8 +37,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         
         self.create_graph()
         
-        self.init_connect()
         self.create_code_f_dict()
+        self.init_connect()
         
         self.stringInputRadioButton.setChecked(True)
         
@@ -124,7 +124,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         return binary
 
     def update_combo_box(self):
-
+        
         self.initialConditionComboBox.clear()
         
         t = self.code_f[self.codeComboBox.itemText(self.codeComboBox.currentIndex())][2]
@@ -168,6 +168,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         if not self.hideGraphCheckBox.isChecked():
 
+            self.apply_multiplier(self.y)
+
             self.ax = self.figure.add_subplot(211)
             self.ax.step(self.x, self.y)
             self.ax2 = self.figure.add_subplot(212)
@@ -178,6 +180,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.y2 = code_f_tuple[0](binary_list, self.initialConditionComboBox.currentIndex())
         self.y2 = [ self.y2[0] ] + self.y2
         self.x2 = [ i for i in range(len(self.y2)) ]
+        
+        self.apply_multiplier(self.y2)
         
         if(self.x[-1] != self.x2[-1]):
             mul = self.x[-1]/self.x2[-1]
@@ -213,7 +217,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             start = value - self.VizualizationSpinBox.value()/20
             end = start + 21*self.VizualizationSpinBox.value()/20
         
-        ax.axis([start, end, min(y) - 0.2, max(y) + 0.2])
+        diff = max(y) - min(y)
+        ax.axis([start, end, min(y) - 0.2*diff, max(y) + 0.2*diff])
     
     def init_connect(self):
         
@@ -223,6 +228,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.initialConditionComboBox.currentIndexChanged.connect(self.order_graph_update)
         self.partialVizualizationCheckBox.stateChanged.connect(self.partial_vizualization_state_changed)
         self.VizualizationSpinBox.valueChanged.connect(self.update_axis)
+        self.outputMultiplierSpinBox.valueChanged.connect(self.plot)
         self.hideGraphCheckBox.stateChanged.connect(self.plot)
         self.stringInputRadioButton.clicked.connect(self.order_graph_update)
         self.hexInputRadioButton.clicked.connect(self.order_graph_update)
@@ -243,6 +249,11 @@ class MainWindow(QMainWindow, Ui_MainWindow):
              "AMI" : ( linecodes.generate_ami, 1, ("Bit 1 Positivo", "Bit 1 Negativo")),
              "RZ" : ( linecodes.generate_rz, 1, () ),
              "2B1Q" : ( linecodes.generate_2B1Q, 2, () ) }
+        
+        self.codeComboBox.clear()
+        
+        for code in self.code_f:
+            self.codeComboBox.addItem(code)
 
     def create_graph(self):
         
@@ -253,6 +264,13 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         
         self.graphLayout.addWidget(self.canvas)
         self.graphLayout.addWidget(self.toolbar)
+
+    def apply_multiplier(self, l):
+        
+        v = self.outputMultiplierSpinBox.value()
+        
+        for i in range(len(l)):
+            l[i] *= v
 
     @staticmethod
     def hex_to_binary(hx):

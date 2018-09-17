@@ -1,7 +1,7 @@
 
 #-------------------------#-------------------------#-------------------------#-------------------------#-------------------------#
 
-def generate_ami_B8ZS_base(binary_list, init_cond, is_B8ZS):
+def generate_ami_B8ZS_base(binary_list, init_cond, is_B8ZS, is_pseudoternary = False):
     
     last = 1 if init_cond else -1
     zeroes = 0
@@ -9,9 +9,9 @@ def generate_ami_B8ZS_base(binary_list, init_cond, is_B8ZS):
     result = []
     for bit in binary_list:
         
-        if bit: 
+        if bool(bit) is not is_pseudoternary:
             zeroes = 0
-            last = -last;
+            last = -last
             code_value = last
         else:
             zeroes += 1
@@ -118,5 +118,11 @@ def generate_MLT3(binary_list, init_cond):
         result.append(last)
     
     return result
+
+#-------------------------#-------------------------#-------------------------#-------------------------#-------------------------#
+
+def generate_pseudoternary(binary_list, init_cond):
+    
+    return generate_ami_B8ZS_base(binary_list, init_cond, False, True)
 
 #-------------------------#-------------------------#-------------------------#-------------------------#-------------------------#

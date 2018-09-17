@@ -169,6 +169,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         if not self.hideGraphCheckBox.isChecked():
 
             self.apply_multiplier(self.y)
+            self.apply_offset(self.y)
 
             self.ax = self.figure.add_subplot(211)
             self.ax.step(self.x, self.y)
@@ -182,6 +183,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.x2 = [ i for i in range(len(self.y2)) ]
         
         self.apply_multiplier(self.y2)
+        self.apply_offset(self.y2)
         
         if(self.x[-1] != self.x2[-1]):
             mul = self.x[-1]/self.x2[-1]
@@ -229,6 +231,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.partialVizualizationCheckBox.stateChanged.connect(self.partial_vizualization_state_changed)
         self.VizualizationSpinBox.valueChanged.connect(self.update_axis)
         self.outputMultiplierSpinBox.valueChanged.connect(self.plot)
+        self.offsetSpinBox.valueChanged.connect(self.plot)
         self.hideGraphCheckBox.stateChanged.connect(self.plot)
         self.stringInputRadioButton.clicked.connect(self.order_graph_update)
         self.hexInputRadioButton.clicked.connect(self.order_graph_update)
@@ -249,7 +252,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
              "AMI" : ( linecodes.generate_ami, 1, ("Bit 1 Positivo", "Bit 1 Negativo")),
              "RZ" : ( linecodes.generate_rz, 1, () ),
              "2B1Q" : ( linecodes.generate_2B1Q, 2, () ),
-             "MLT-3" : ( linecodes.generate_MLT3, 1, ("Bit 1", "Bit 0 Crescendo", "Bit 0 Decrescendo", "Bit -1") )}
+             "MLT-3" : ( linecodes.generate_MLT3, 1, ("Bit 1", "Bit 0 Crescendo", "Bit 0 Decrescendo", "Bit -1") ),
+             "Pseudoternario" : ( linecodes.generate_pseudoternary, 1, ("Bit 1 Positivo", "Bit 1 Negativo") )}
         
         self.codeComboBox.clear()
         
@@ -265,6 +269,13 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         
         self.graphLayout.addWidget(self.canvas)
         self.graphLayout.addWidget(self.toolbar)
+
+    def apply_offset(self, l):
+        
+        v = self.offsetSpinBox.value()
+        
+        for i in range(len(l)):
+            l[i] += v
 
     def apply_multiplier(self, l):
         

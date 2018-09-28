@@ -253,7 +253,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
              "RZ" : ( linecodes.generate_rz, 1, () ),
              "2B1Q" : ( linecodes.generate_2B1Q, 2, () ),
              "MLT-3" : ( linecodes.generate_MLT3, 1, ("Bit 1", "Bit 0 Crescendo", "Bit 0 Decrescendo", "Bit -1") ),
-             "Pseudoternario" : ( linecodes.generate_pseudoternary, 1, ("Bit 1 Positivo", "Bit 1 Negativo") )}
+             "Pseudoternario" : ( linecodes.generate_pseudoternary, 1, ("Bit 1 Positivo", "Bit 1 Negativo") ),
+             "NRZ and 4B5B" : ( linecodes.generate_NRZ_4B5B, 4, () )}
         
         self.codeComboBox.clear()
         

@@ -242,9 +242,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         if self._second_axis is None:
             return
 
+        f_x_values, f_y_values = self._graphs_data.get_values()
+        s_x_values, s_y_values = self._graphs_data.get_values(1)
         if self._first_axis is not None:
-            f_x_values, f_y_values = self._graphs_data.get_values()
-            s_x_values, s_y_values = self._graphs_data.get_values(1)
             self.update_axis_partial(self._first_axis, f_x_values, f_y_values)
         self.update_axis_partial(self._second_axis, s_x_values, s_y_values)
 

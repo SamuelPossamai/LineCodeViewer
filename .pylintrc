@@ -83,7 +83,8 @@ reports=no
 # respectively contain the number of errors / warnings messages and the total
 # number of statements analyzed. This is used by the global evaluation report
 # (RP0004).
-evaluation=10.0 - ((float(5 * error + warning + refactor + convention) / statement) * 10)
+# evaluation=10.0 - ((float(5 * error + warning + refactor + convention) / statement) * 10)
+evaluation=10.0 / (1 + (2*float(20 * error + 10 * warning + 3 * refactor + 1.5 * convention) / statement)**2)
 
 # Template used to display messages. This is a python new-style format string
 # used to format the message information. See doc for all details
@@ -152,7 +153,7 @@ single-line-if-stmt=no
 no-space-check=trailing-comma,dict-separator
 
 # Maximum number of lines in a module
-max-module-lines=2000
+max-module-lines=1000
 
 # String used as indentation unit. This is usually " " (4 spaces) or "\t" (1
 # tab).
@@ -162,7 +163,7 @@ indent-string='    '
 indent-after-paren=4
 
 # Expected format of line ending, e.g. empty (any line ending), LF or CRLF.
-expected-line-ending-format=
+expected-line-ending-format=LF
 
 
 [BASIC]
@@ -300,23 +301,23 @@ spelling-store-unknown-words=no
 [DESIGN]
 
 # Maximum number of arguments for function / method
-max-args=10
+max-args=6
 
 # Argument names that match this expression will be ignored. Default to name
 # with leading underscore
 ignored-argument-names=_.*
 
 # Maximum number of locals for function / method body
-max-locals=25
+max-locals=15
 
 # Maximum number of return / yield for function / method body
-max-returns=11
+max-returns=6
 
 # Maximum number of branch for function / method body
-max-branches=26
+max-branches=10
 
 # Maximum number of statements in function / method body
-max-statements=100
+max-statements=60
 
 # Maximum number of parents for a class (see R0901).
 max-parents=7

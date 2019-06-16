@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+'''
+Module that contains the MainWindow class, a class to represent the LineCodeViewer window
+if this file is executed, the LineCodeViewer program will be launched
+'''
 
 import sys
 
@@ -18,7 +22,37 @@ import linecodes
 
 Ui_MainWindow, _ = uic.loadUiType("mainwindow.ui")
 
+class LineCodeProperties:
+
+    def __init__(self, code_function, min_bits, initial_condition_options):
+        self._code_function = code_function
+        self._min_bits = min_bits
+        self._init_cond = initial_condition_options
+
+    @property
+    def code_function(self):
+        return self._code_function
+
+    @property
+    def min_bits(self):
+        return self._min_bits
+
+    @property
+    def init_cond_options(self):
+        return self._init_cond
+
 class MainWindow(QMainWindow, Ui_MainWindow):
+
+    class _GraphsData:
+
+        def __init__(self, n_graphs):
+            self._data = [([], []) for i in range(n_graphs)]
+
+        def set_values(self, x_values, y_values, n_graph=0):
+            self._data[n_graph] = x_values, y_values
+
+        def get_values(self, n_graph=0):
+            return self._data[n_graph]
 
     def __init__(self, parent=None):
 
@@ -26,29 +60,31 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         Ui_MainWindow.__init__(self)
         self.setupUi(self)
 
-        self.ax = None
-        self.ax2 = None
+        self._first_axis = None
+        self._second_axis = None
 
-        self.timer = QTimer(self)
+        self._graphs_data = MainWindow._GraphsData(2)
+
+        self._timer = QTimer(self)
 
         self.horizontalSlider.hide()
         self.VizualizationSpinBox.hide()
 
         self.create_graph()
 
-        self.create_code_f_dict()
-        self.init_connect()
+        self._create_code_f_dict()
+        self._init_connect()
 
         self.stringInputRadioButton.setChecked(True)
 
         self.lineEdit.setFocus()
 
-        self.must_update_graph = 0
+        self._must_update_graph = 0
 
         self.update_combo_box()
 
-        self.timer.setInterval(150)
-        self.timer.start()
+        self._timer.setInterval(150)
+        self._timer.start()
 
     def partial_vizualization_state_changed(self):
 
@@ -56,23 +92,23 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.VizualizationSpinBox.setVisible(self.partialVizualizationCheckBox.isChecked())
         self.update_axis()
 
-    def order_graph_update(self):
+    def _order_graph_update(self):
 
-        self.must_update_graph = 1
+        self._must_update_graph = 1
 
     def update_graph(self):
 
-        if self.must_update_graph == 2:
-            self.must_update_graph = 0
+        if self._must_update_graph == 2:
+            self._must_update_graph = 0
             self.plot()
 
-        elif self.must_update_graph >= 1:
-            self.must_update_graph += 1
+        elif self._must_update_graph >= 1:
+            self._must_update_graph += 1
 
     def read_bin_lineedit(self):
 
-        self.ax = None
-        self.ax2 = None
+        self._first_axis = None
+        self._second_axis = None
 
         word = self.lineEdit.text()
 
@@ -90,7 +126,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 if binary[0] == '0' and (binary[1] == 'b' or binary[1] == 'B'):
                     binary = binary[2:]
 
-            hex_ = self.bin_to_hex(binary)
+            hex_ = self._bin_to_hex(binary)
 
             if hex_ is None:
                 self.canvas.draw()
@@ -103,13 +139,13 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             if self.hexInputRadioButton.isChecked():
                 hex_ = word
             else:
-                hex_ = self.word_to_hex(word)
+                hex_ = self._word_to_hex(word)
 
             if len(hex_) > 2:
                 if hex_[0] == '0' and (hex_[1] == 'x' or hex_[1] == 'X'):
                     hex_ = hex_[2:]
 
-            binary = self.hex_to_binary(hex_)
+            binary = self._hex_to_binary(hex_)
 
             if binary is None:
                 self.canvas.draw()
@@ -126,14 +162,15 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         self.initialConditionComboBox.clear()
 
-        t = self.code_f[self.codeComboBox.itemText(self.codeComboBox.currentIndex())][2]
-        if not t:
+        c_prop = self._code_f[self.codeComboBox.itemText(self.codeComboBox.currentIndex())]
+        init_options = c_prop.init_cond_options
+        if not init_options:
 
             self.initialConditionLabel.hide()
             self.initialConditionComboBox.hide()
             return
 
-        for string in t:
+        for string in init_options:
             self.initialConditionComboBox.addItem('   ' +string)
 
         self.initialConditionLabel.show()
@@ -142,7 +179,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def code_modified(self):
 
         self.update_combo_box()
-        self.order_graph_update()
+        self._order_graph_update()
 
     def plot(self):
 
@@ -157,58 +194,66 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.canvas.draw()
             return
 
-        code_f_tuple = self.code_f[self.codeComboBox.itemText(self.codeComboBox.currentIndex())]
+        code_f_prop = self._code_f[self.codeComboBox.itemText(self.codeComboBox.currentIndex())]
+        min_bits = code_f_prop.min_bits
 
-        binary_list = self.int_string_to_list(binary)
-        if len(binary) % code_f_tuple[1]:
-            binary_list = [0]*(code_f_tuple[1] - len(binary)%code_f_tuple[1]) + binary_list
+        binary_list = [int(i) for i in binary]
+        if len(binary) % min_bits:
+            binary_list = [0]*(min_bits - len(binary) % min_bits) + binary_list
 
-        self.y = [binary_list[0]] + binary_list
-        self.x = [i for i in range(len(self.y))]
+        y_values = [binary_list[0]] + binary_list
+        x_values = [i for i in range(len(y_values))]
+
+        self._graphs_data.set_values(x_values, y_values)
 
         if not self.hideGraphCheckBox.isChecked():
 
-            self.apply_multiplier(self.y)
-            self.apply_offset(self.y)
+            self.apply_multiplier(y_values)
+            self.apply_offset(y_values)
 
-            self.ax = self.figure.add_subplot(211)
-            self.ax.step(self.x, self.y)
-            self.ax2 = self.figure.add_subplot(212)
+            self._first_axis = self.figure.add_subplot(211)
+            self._first_axis.step(x_values, y_values)
+            self._second_axis = self.figure.add_subplot(212)
 
         else:
-            self.ax2 = self.figure.add_subplot(111)
+            self._second_axis = self.figure.add_subplot(111)
 
-        self.y2 = code_f_tuple[0](binary_list, self.initialConditionComboBox.currentIndex())
-        self.y2 = [self.y2[0]] + self.y2
-        self.x2 = [i for i in range(len(self.y2))]
+        y_values_2 = code_f_prop.code_function(binary_list,
+                                               self.initialConditionComboBox.currentIndex())
+        y_values_2 = [y_values_2[0]] + y_values_2
+        x_values_2 = [i for i in range(len(y_values_2))]
 
-        self.apply_multiplier(self.y2)
-        self.apply_offset(self.y2)
+        self._graphs_data.set_values(x_values_2, y_values_2, 1)
 
-        if self.x[-1] != self.x2[-1]:
-            mul = self.x[-1]/self.x2[-1]
-            for i in range(len(self.x2)):
-                self.x2[i] *= mul
+        self.apply_multiplier(y_values_2)
+        self.apply_offset(y_values_2)
 
-        self.ax2.step(self.x2, self.y2)
+        if x_values[-1] != x_values_2[-1]:
+            mul = x_values[-1]/x_values_2[-1]
+            for i, _ in enumerate(x_values_2):
+                x_values_2[i] *= mul
+
+        self._second_axis.step(x_values_2, y_values_2)
 
         self.update_axis()
 
     def update_axis(self):
 
-        if self.ax2 is None:
+        if self._second_axis is None:
             return
 
-        if self.ax is not None:
-            self.update_axis_partial(self.ax, self.x, self.y)
-        self.update_axis_partial(self.ax2, self.x2, self.y2)
+        if self._first_axis is not None:
+            f_x_values, f_y_values = self._graphs_data.get_values()
+            s_x_values, s_y_values = self._graphs_data.get_values(1)
+            self.update_axis_partial(self._first_axis, f_x_values, f_y_values)
+        self.update_axis_partial(self._second_axis, s_x_values, s_y_values)
 
         self.canvas.draw()
 
-    def update_axis_partial(self, g_axis, x, y):
+    def update_axis_partial(self, g_axis, x_values, y_values):
 
-        start = -x[-1]/20
-        end = 21*x[-1]/20
+        start = -x_values[-1]/20
+        end = 21*x_values[-1]/20
 
         g_axis.yaxis.set_major_locator(MaxNLocator(integer=True))
         g_axis.xaxis.set_major_locator(MaxNLocator(integer=True))
@@ -217,55 +262,60 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         g_axis.yaxis.grid(self.horizontalGridCheckBox.isChecked())
 
         if self.partialVizualizationCheckBox.isChecked() is True:
-            value = (x[-1] - 19*self.VizualizationSpinBox.value()/20) * \
+            value = (x_values[-1] - 19*self.VizualizationSpinBox.value()/20) * \
                 self.horizontalSlider.value()/99
             start = value - self.VizualizationSpinBox.value()/20
             end = start + 21*self.VizualizationSpinBox.value()/20
 
-        diff = max(y) - min(y)
-        g_axis.axis([start, end, min(y) - 0.2*diff - 0.04, max(y) + 0.2*diff + 0.04])
+        diff = max(y_values) - min(y_values)
+        g_axis.axis([start, end, min(y_values) - 0.2*diff - 0.04, max(y_values) + 0.2*diff + 0.04])
 
-    def init_connect(self):
+    def _init_connect(self):
 
         self.horizontalSlider.valueChanged.connect(self.update_axis)
-        self.lineEdit.textChanged.connect(self.order_graph_update)
+        self.lineEdit.textChanged.connect(self._order_graph_update)
         self.codeComboBox.currentIndexChanged.connect(self.code_modified)
-        self.initialConditionComboBox.currentIndexChanged.connect(self.order_graph_update)
+        self.initialConditionComboBox.currentIndexChanged.connect(self._order_graph_update)
         self.partialVizualizationCheckBox.stateChanged.connect(
             self.partial_vizualization_state_changed)
         self.VizualizationSpinBox.valueChanged.connect(self.update_axis)
         self.outputMultiplierSpinBox.valueChanged.connect(self.plot)
         self.offsetSpinBox.valueChanged.connect(self.plot)
         self.hideGraphCheckBox.stateChanged.connect(self.plot)
-        self.stringInputRadioButton.clicked.connect(self.order_graph_update)
-        self.hexInputRadioButton.clicked.connect(self.order_graph_update)
-        self.binInputRadioButton.clicked.connect(self.order_graph_update)
+        self.stringInputRadioButton.clicked.connect(self._order_graph_update)
+        self.hexInputRadioButton.clicked.connect(self._order_graph_update)
+        self.binInputRadioButton.clicked.connect(self._order_graph_update)
         self.verticalGridCheckBox.stateChanged.connect(self.update_axis)
         self.horizontalGridCheckBox.stateChanged.connect(self.update_axis)
-        self.staticCheckBox.stateChanged.connect(self.order_graph_update)
+        self.staticCheckBox.stateChanged.connect(self._order_graph_update)
         self.actionSobre.triggered.connect(self.open_about)
         self.actionAjuda.triggered.connect(self.open_help)
-        self.timer.timeout.connect(self.update_graph)
+        self._timer.timeout.connect(self.update_graph)
 
-    def create_code_f_dict(self):
+    def _create_code_f_dict(self):
 
-        self.code_f = {"Manchester Diferencial" : (linecodes.generate_machester_differential,
-                                                   1, ("Nivel Baixo", "Nivel Alto")),
-                       "Manchester" : (linecodes.generate_manchester, 1, ()),
-                       "B8ZS" : (linecodes.generate_b8zs, 1, ("Bit 1 Positivo", "Bit 1 Negativo")),
-                       "NRZ Polar" : (linecodes.generate_nrz_polar, 1, ()),
-                       "AMI" : (linecodes.generate_ami, 1, ("Bit 1 Positivo", "Bit 1 Negativo")),
-                       "RZ" : (linecodes.generate_rz, 1, ()),
-                       "2B1Q" : (linecodes.generate_2b1q, 2, ()),
-                       "MLT-3" : (linecodes.generate_mlt3, 1,
-                                  ("Bit 1", "Bit 0 Crescendo", "Bit 0 Decrescendo", "Bit -1")),
-                       "Pseudoternario" : (linecodes.generate_pseudoternary, 1,
-                                           ("Bit 1 Positivo", "Bit 1 Negativo")),
-                       "NRZ and 4B5B" : (linecodes.generate_nrz_4b5b, 4, ())}
+        LProp = LineCodeProperties
+
+        self._code_f = {"Manchester Diferencial": LProp(linecodes.generate_machester_differential,
+                                                        1, ("Nivel Baixo", "Nivel Alto")),
+                        "Manchester": LProp(linecodes.generate_manchester, 1, ()),
+                        "B8ZS": LProp(linecodes.generate_b8zs, 1,
+                                      ("Bit 1 Positivo", "Bit 1 Negativo")),
+                        "NRZ Polar": LProp(linecodes.generate_nrz_polar, 1, ()),
+                        "AMI": LProp(linecodes.generate_ami, 1,
+                                     ("Bit 1 Positivo", "Bit 1 Negativo")),
+                        "RZ": LProp(linecodes.generate_rz, 1, ()),
+                        "2B1Q": LProp(linecodes.generate_2b1q, 2, ()),
+                        "MLT-3": LProp(linecodes.generate_mlt3, 1,
+                                       ("Bit 1", "Bit 0 Crescendo",
+                                        "Bit 0 Decrescendo", "Bit -1")),
+                        "Pseudoternario": LProp(linecodes.generate_pseudoternary,
+                                                1, ("Bit 1 Positivo", "Bit 1 Negativo")),
+                        "NRZ e 4B5B": LProp(linecodes.generate_nrz_4b5b, 4, ())}
 
         self.codeComboBox.clear()
 
-        for code in self.code_f:
+        for code in self._code_f:
             self.codeComboBox.addItem(code)
 
     def create_graph(self):
@@ -278,27 +328,27 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.graphLayout.addWidget(self.canvas)
         self.graphLayout.addWidget(self.toolbar)
 
-    def apply_offset(self, l):
+    def apply_offset(self, values):
 
-        v = self.offsetSpinBox.value()
+        offset = self.offsetSpinBox.value()
 
-        for i, _ in enumerate(l):
-            l[i] += v
+        for i, _ in enumerate(values):
+            values[i] += offset
 
-    def apply_multiplier(self, l):
+    def apply_multiplier(self, values):
 
-        v = self.outputMultiplierSpinBox.value()
+        mul = self.outputMultiplierSpinBox.value()
 
-        for i, _ in enumerate(l):
-            l[i] *= v
+        for i, _ in enumerate(values):
+            values[i] *= mul
 
     @staticmethod
-    def hex_to_binary(hex_):
+    def _hex_to_binary(hex_):
 
         try:
             values = ""
-            for v in hex_:
-                values += "{:0=4b}".format(int(v, 16))
+            for hex_char in hex_:
+                values += "{:0=4b}".format(int(hex_char, 16))
 
         except ValueError:
             return None
@@ -306,7 +356,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         return values
 
     @staticmethod
-    def bin_to_hex(binary):
+    def _bin_to_hex(binary):
 
         binary = '0'*(len(binary) % 4) + binary
         try:
@@ -320,18 +370,13 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         return hex_
 
     @staticmethod
-    def word_to_hex(word):
+    def _word_to_hex(word):
 
         values = ''
         for letter in word:
             values += '{:2x}'.format(ord(letter))
 
         return values
-
-    @staticmethod
-    def int_string_to_list(string):
-
-        return [int(i) for i in string]
 
     @staticmethod
     def open_about():

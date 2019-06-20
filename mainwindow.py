@@ -63,12 +63,14 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self._first_axis = None
         self._second_axis = None
 
-        self._graphs_data = MainWindow._GraphsData(2)
+        self._graphs_data = MainWindow._GraphsData(3)
 
         self._timer = QTimer(self)
 
         self.horizontalSlider.hide()
         self.VizualizationSpinBox.hide()
+        self.visibleBitsLabel.hide()
+        self.initPosLabel.hide()
 
         self.create_graph()
 
@@ -90,6 +92,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         self.horizontalSlider.setVisible(self.partialVizualizationCheckBox.isChecked())
         self.VizualizationSpinBox.setVisible(self.partialVizualizationCheckBox.isChecked())
+        self.visibleBitsLabel.setVisible(self.partialVizualizationCheckBox.isChecked())
+        self.initPosLabel.setVisible(self.partialVizualizationCheckBox.isChecked())
         self.update_axis()
 
     def _order_graph_update(self):
@@ -203,20 +207,39 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         y_values = [binary_list[0]] + binary_list
         x_values = [i for i in range(len(y_values))]
+        
+        self.VizualizationSpinBox.setMaximum(len(x_values) - 1)
 
         self._graphs_data.set_values(x_values, y_values)
 
-        if not self.hideGraphCheckBox.isChecked():
+        number_of_graphs = 1 + int(self.showInputCheckBox.isChecked()) + \
+                           int(self.showClockCheckBox.isChecked())
 
+        self.figure.subplots_adjust(hspace=0.8, left=0.05, right=0.95)
+
+        if self.showInputCheckBox.isChecked():
+        
             self.apply_multiplier(y_values)
             self.apply_offset(y_values)
-
-            self._first_axis = self.figure.add_subplot(211)
+        
+            self._first_axis = self.figure.add_subplot(number_of_graphs, 1,
+                                                       number_of_graphs - 1)
+            self._first_axis.set_title('entrada')
             self._first_axis.step(x_values, y_values)
-            self._second_axis = self.figure.add_subplot(212)
 
-        else:
-            self._second_axis = self.figure.add_subplot(111)
+        if self.showClockCheckBox.isChecked():
+
+            self._third_axis = self.figure.add_subplot(number_of_graphs, 1, 1)
+            self._third_axis.set_title('clock')
+            
+            clock_x = [i/2 for i in range(2*len(y_values) - 1)]
+            clock_y = [i%2 for i in range(2*len(y_values) - 1)]
+            self._graphs_data.set_values(clock_x, clock_y, 2)
+            self._third_axis.step(clock_x, clock_y)
+
+        self._second_axis = self.figure.add_subplot(number_of_graphs, 1, 
+                                                    number_of_graphs)
+        self._second_axis.set_title('saída')
 
         y_values_2 = code_f_prop.code_function(binary_list,
                                                self.initialConditionComboBox.currentIndex())
@@ -242,10 +265,13 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         if self._second_axis is None:
             return
 
-        f_x_values, f_y_values = self._graphs_data.get_values()
         s_x_values, s_y_values = self._graphs_data.get_values(1)
         if self._first_axis is not None:
+            f_x_values, f_y_values = self._graphs_data.get_values()
             self.update_axis_partial(self._first_axis, f_x_values, f_y_values)
+        if self._third_axis is not None:
+            clock_x, clock_y = self._graphs_data.get_values(2)
+            self.update_axis_partial(self._third_axis, clock_x, clock_y)
         self.update_axis_partial(self._second_axis, s_x_values, s_y_values)
 
         self.canvas.draw()
@@ -267,8 +293,24 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             start = value - self.VizualizationSpinBox.value()/20
             end = start + 21*self.VizualizationSpinBox.value()/20
 
+        first = y_values[0]
+        for val in y_values:
+            if val != first:
+                break
+        else:
+
+            if first == 0:
+                g_axis.axis([start, end, -0.24, 1.24])
+            else:
+                g_axis.axis([start, end, min(0, first) - 0.2*abs(first) - 0.04, 
+                             max(0, first) + 0.2*abs(first) + 0.04])
+
+            return
+                
         diff = max(y_values) - min(y_values)
         g_axis.axis([start, end, min(y_values) - 0.2*diff - 0.04, max(y_values) + 0.2*diff + 0.04])
+        return
+            
 
     def _init_connect(self):
 
@@ -281,7 +323,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.VizualizationSpinBox.valueChanged.connect(self.update_axis)
         self.outputMultiplierSpinBox.valueChanged.connect(self.plot)
         self.offsetSpinBox.valueChanged.connect(self.plot)
-        self.hideGraphCheckBox.stateChanged.connect(self.plot)
+        self.showInputCheckBox.stateChanged.connect(self.plot)
+        self.showClockCheckBox.stateChanged.connect(self.plot)
         self.stringInputRadioButton.clicked.connect(self._order_graph_update)
         self.hexInputRadioButton.clicked.connect(self._order_graph_update)
         self.binInputRadioButton.clicked.connect(self._order_graph_update)
@@ -296,22 +339,30 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         LProp = LineCodeProperties
 
-        self._code_f = {"Manchester Diferencial": LProp(linecodes.generate_machester_differential,
-                                                        1, ("Nivel Baixo", "Nivel Alto")),
-                        "Manchester": LProp(linecodes.generate_manchester, 1, ()),
-                        "B8ZS": LProp(linecodes.generate_b8zs, 1,
-                                      ("Bit 1 Positivo", "Bit 1 Negativo")),
-                        "NRZ Polar": LProp(linecodes.generate_nrz_polar, 1, ()),
-                        "AMI": LProp(linecodes.generate_ami, 1,
+        self._code_f = {"NRZ Unipolar"  : LProp(linecodes.generate_nrz_unipolar,
+                            1, ()),
+                        "NRZ-L Polar"   : LProp(linecodes.generate_nrz_polar_l, 
+                            1, ()),
+                        "NRZ-I Polar"   : LProp(linecodes.generate_nrz_polar_i, 
+                            1, ("Nivel Baixo", "Nivel Alto")),
+                        "RZ Polar"      : LProp(linecodes.generate_rz, 1, ()),
+                        "Manchester"    : LProp(linecodes.generate_manchester, 
+                            1, ()),
+                        "Manchester Diferencial": 
+                            LProp(linecodes.generate_machester_differential, 1,
+                            ("Nivel Baixo", "Nivel Alto")),
+                        #"B8ZS"          : LProp(linecodes.generate_b8zs, 1,
+                        #              ("Bit 1 Positivo", "Bit 1 Negativo")),
+                        "AMI"           : LProp(linecodes.generate_ami, 1,
                                      ("Bit 1 Positivo", "Bit 1 Negativo")),
-                        "RZ": LProp(linecodes.generate_rz, 1, ()),
-                        "2B1Q": LProp(linecodes.generate_2b1q, 2, ()),
-                        "MLT-3": LProp(linecodes.generate_mlt3, 1,
+                        "Pseudoternario": LProp(linecodes.generate_pseudoternary,
+                             1, ("Bit 1 Positivo", "Bit 1 Negativo")),
+                        "2B1Q"          : LProp(linecodes.generate_2b1q, 2, ()),
+                        "MLT-3"         : LProp(linecodes.generate_mlt3, 1,
                                        ("Bit 1", "Bit 0 Crescendo",
                                         "Bit 0 Decrescendo", "Bit -1")),
-                        "Pseudoternario": LProp(linecodes.generate_pseudoternary,
-                                                1, ("Bit 1 Positivo", "Bit 1 Negativo")),
-                        "NRZ e 4B5B": LProp(linecodes.generate_nrz_4b5b, 4, ())}
+                        #"NRZ e 4B5B": LProp(linecodes.generate_nrz_4b5b, 4, ())
+                        }
 
         self.codeComboBox.clear()
 

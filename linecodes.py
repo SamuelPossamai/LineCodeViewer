@@ -46,9 +46,21 @@ def generate_manchester(binary_list, _):
 
     return result
 
-def generate_nrz_polar(binary_list, _):
+def generate_nrz_polar_l(binary_list, _):
 
-    return [-1 if bit else 1 for bit in binary_list]
+    return [-1 if bit else 1 for bit in binary_list]    #NRZ-L
+
+def generate_nrz_unipolar(binary_list, _):
+
+    return binary_list 
+    
+def generate_nrz_polar_i(binary_list, init_cond):
+
+    result = [int(init_cond)]
+    for bit in binary_list:
+        result.append(result[-1] if not bit else (result[-1] + 1) % 2)
+
+    return result[1:] 
 
 def generate_nrz_4b5b(binary_list, _):
 

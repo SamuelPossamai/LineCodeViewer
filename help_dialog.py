@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+'''
+This file is contains the class that represents the help dialog window, if this file is executed
+the help window will appear
+'''
 
 import sys
 
@@ -8,6 +12,7 @@ from PyQt5.QtWidgets import QDialog, QApplication
 Ui_Help, _ = uic.loadUiType("help.ui")
 
 class Help(QDialog, Ui_Help):
+    '''Class that inherits QDialog to create a dialog window showing the program help window'''
 
     def __init__(self, parent=None):
 
@@ -16,6 +21,7 @@ class Help(QDialog, Ui_Help):
         self.setupUi(self)
 
 def __runfile__():
+    '''Function called when the file is executed'''
     app = QApplication(sys.argv)
 
     main = Help()
